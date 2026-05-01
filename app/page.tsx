@@ -1,11 +1,19 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValue,
+  useSpring,
+  type Variants,
+} from "framer-motion";
+import { useRef, useEffect, useState } from "react";
+import Image from "next/image";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 48 },
   visible: {
     opacity: 1,
@@ -14,7 +22,7 @@ const fadeUp = {
   },
 };
 
-const stagger = {
+const stagger: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.14 } },
 };
@@ -92,6 +100,91 @@ const features = [
   },
 ];
 
+/* ── Particle system ── */
+type Particle = {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  duration: number;
+  delay: number;
+  drift: number;
+};
+
+function Particles() {
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    setParticles(
+      Array.from({ length: 24 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 2.5 + 1,
+        duration: Math.random() * 9 + 6,
+        delay: Math.random() * 5,
+        drift: Math.random() * 35 + 15,
+      }))
+    );
+  }, []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          className="absolute rounded-full bg-gold/30"
+          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size }}
+          animate={{ y: [-p.drift / 2, p.drift / 2, -p.drift / 2], opacity: [0.12, 0.45, 0.12] }}
+          transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ── 3D tilt card ── */
+function TiltCard({
+  children,
+  className,
+  variants,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variants?: Variants;
+}) {
+  const xMv = useMotionValue(0);
+  const yMv = useMotionValue(0);
+  const rotateX = useSpring(useTransform(yMv, [-0.5, 0.5], [8, -8]), {
+    stiffness: 300,
+    damping: 25,
+  });
+  const rotateY = useSpring(useTransform(xMv, [-0.5, 0.5], [-8, 8]), {
+    stiffness: 300,
+    damping: 25,
+  });
+
+  return (
+    <motion.div
+      variants={variants}
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        xMv.set((e.clientX - r.left) / r.width - 0.5);
+        yMv.set((e.clientY - r.top) / r.height - 0.5);
+      }}
+      onMouseLeave={() => {
+        xMv.set(0);
+        yMv.set(0);
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ── Page ── */
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -108,12 +201,11 @@ export default function Home() {
         initial={{ opacity: 0, y: -18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: "easeOut" }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 border-b border-white/[0.06] backdrop-blur-xl bg-[#0c0b09]/75"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 border-b border-white/[0.06] backdrop-blur-xl bg-[#0c0b09]/80"
       >
         <span className="text-2xl font-bold font-display text-gold tracking-wide select-none">
           Tchibo2Go
         </span>
-
         <div className="hidden md:flex items-center gap-8 text-[13px] text-white/50">
           {["Produkty", "O nás", "Kontakt"].map((label) => (
             <a
@@ -125,12 +217,11 @@ export default function Home() {
             </a>
           ))}
         </div>
-
         <motion.a
           href="#kontakt"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          className="hidden md:inline-flex items-center gap-2 px-5 py-2 rounded-full border border-gold/40 text-gold text-[13px] hover:bg-gold/8 transition-colors duration-200"
+          className="hidden md:inline-flex items-center gap-2 px-5 py-2 rounded-full border border-gold/40 text-gold text-[13px] hover:bg-gold/10 transition-colors duration-200"
         >
           Kontaktujte nás
         </motion.a>
@@ -139,86 +230,144 @@ export default function Home() {
       {/* ── Hero ── */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+        className="relative min-h-screen flex flex-col overflow-hidden"
       >
-        {/* Ambient glow */}
+        {/* Particles */}
+        <Particles />
+
+        {/* Ambient glow — offset to the left where the text sits */}
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full"
+            className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px]"
             style={{
               background:
-                "radial-gradient(circle, rgba(200,169,110,0.08) 0%, transparent 70%)",
+                "radial-gradient(circle, rgba(200,169,110,0.09) 0%, transparent 68%)",
             }}
           />
         </div>
 
         {/* Decorative rings */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          <div className="w-[500px] h-[500px] rounded-full border border-gold/[0.07]" />
-          <div className="absolute w-[800px] h-[800px] rounded-full border border-gold/[0.04]" />
-          <div className="absolute w-[1100px] h-[1100px] rounded-full border border-gold/[0.02]" />
+          <div className="w-[480px] h-[480px] rounded-full border border-gold/[0.07]" />
+          <div className="absolute w-[780px] h-[780px] rounded-full border border-gold/[0.04]" />
+          <div className="absolute w-[1080px] h-[1080px] rounded-full border border-gold/[0.025]" />
         </div>
 
-        {/* Hero content with parallax */}
+        {/* Parallax wrapper */}
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
-          className="relative z-10 flex flex-col items-center text-center px-6 max-w-5xl mx-auto pt-20 pb-36"
+          className="relative z-10 flex-1 flex items-center max-w-7xl mx-auto w-full px-8 xl:px-16 pt-24 pb-44"
         >
-          <motion.span
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.25 }}
-            className="inline-block mb-7 px-4 py-1.5 rounded-full border border-gold/30 text-gold text-[11px] tracking-[0.2em] uppercase"
-          >
-            Premium Coffee Solutions
-          </motion.span>
+          <div className="grid lg:grid-cols-2 gap-10 xl:gap-20 items-center w-full">
+            {/* ── Left: text ── */}
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+              <motion.span
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.25 }}
+                className="inline-block mb-7 px-4 py-1.5 rounded-full border border-gold/30 text-gold text-[11px] tracking-[0.2em] uppercase"
+              >
+                Premium Coffee Solutions
+              </motion.span>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 36 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4, ease: EASE }}
-            className="font-display text-[clamp(2.8rem,8vw,5.5rem)] font-bold leading-[1.08] tracking-tight mb-7"
-          >
-            Vášeň pre kávu,
-            <br />
-            <span className="text-gold">profesionálne</span>
-            <br />
-            riešenia
-          </motion.h1>
+              <motion.h1
+                initial={{ opacity: 0, y: 36 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.4, ease: EASE }}
+                className="font-display text-[clamp(2.6rem,5.5vw,4.8rem)] font-bold leading-[1.08] tracking-tight mb-7"
+              >
+                Vášeň pre kávu,
+                <br />
+                <span className="gradient-animate">profesionálne</span>
+                <br />
+                riešenia
+              </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.65 }}
-            className="text-white/50 text-[clamp(1rem,2vw,1.2rem)] max-w-xl leading-relaxed mb-10"
-          >
-            Dodávame prémiové kávovary Tchibo, zabezpečujeme servis a správu pre
-            podniky po celom Slovensku.
-          </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.65 }}
+                className="text-white/50 text-[clamp(1rem,1.6vw,1.15rem)] max-w-md leading-relaxed mb-10"
+              >
+                Dodávame prémiové kávovary Tchibo, zabezpečujeme servis a
+                správu pre podniky po celom Slovensku.
+              </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.85 }}
-            className="flex flex-wrap gap-4 justify-center"
-          >
-            <motion.a
-              href="#features"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="px-8 py-3.5 rounded-full bg-gold text-[#0c0b09] font-semibold text-[13px] tracking-wide hover:bg-gold-light transition-colors duration-200"
-            >
-              Zobraziť produkty
-            </motion.a>
-            <motion.a
-              href="#kontakt"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="px-8 py-3.5 rounded-full border border-white/15 text-white/70 text-[13px] tracking-wide hover:border-gold/35 hover:text-gold transition-all duration-200"
-            >
-              Kontaktujte nás
-            </motion.a>
-          </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.85 }}
+                className="flex flex-wrap gap-4 justify-center lg:justify-start"
+              >
+                <motion.a
+                  href="#features"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="px-8 py-3.5 rounded-full bg-gold text-[#0c0b09] font-semibold text-[13px] tracking-wide hover:bg-gold-light transition-colors duration-200"
+                >
+                  Zobraziť produkty
+                </motion.a>
+                <motion.a
+                  href="#kontakt"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="px-8 py-3.5 rounded-full border border-white/15 text-white/70 text-[13px] tracking-wide hover:border-gold/35 hover:text-gold transition-all duration-200"
+                >
+                  Kontaktujte nás
+                </motion.a>
+              </motion.div>
+            </div>
+
+            {/* ── Right: coffee machine image ── */}
+            <div className="hidden lg:flex items-center justify-center">
+              {/* Entry: fade + slide from right */}
+              <motion.div
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 1.1, delay: 0.6, ease: EASE }}
+                className="relative"
+              >
+                {/* Float: up-down loop */}
+                <motion.div
+                  animate={{ y: [0, -16, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  {/* 3D rotation with perspective */}
+                  <motion.div
+                    animate={{ rotateY: [0, 5, 0, -5, 0] }}
+                    transition={{
+                      duration: 12,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 1.8,
+                    }}
+                    style={{ transformPerspective: 1200 }}
+                  >
+                    <div className="relative">
+                      {/* Gold ground glow */}
+                      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-16 bg-gold/20 blur-3xl rounded-full" />
+                      {/* Rim highlight */}
+                      <div className="absolute inset-0 rounded-3xl ring-1 ring-gold/15 z-20 pointer-events-none" />
+
+                      <Image
+                        src="https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=600&auto=format&fit=crop&q=80"
+                        alt="Tchibo espresso kávovar"
+                        width={500}
+                        height={540}
+                        className="rounded-3xl object-cover relative z-10"
+                        priority
+                      />
+
+                      {/* Bottom fade to blend with background */}
+                      <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-transparent via-transparent to-[#0c0b09]/50 z-20 pointer-events-none" />
+                      {/* Left fade */}
+                      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#0c0b09]/15 to-transparent z-20 pointer-events-none" />
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Stats bar */}
@@ -233,9 +382,7 @@ export default function Home() {
               <div
                 key={stat.label}
                 className={`flex flex-col items-center gap-1 text-center py-2 ${
-                  i < stats.length - 1
-                    ? "border-r border-white/[0.07]"
-                    : ""
+                  i < stats.length - 1 ? "border-r border-white/[0.07]" : ""
                 }`}
               >
                 <span className="font-display text-2xl md:text-3xl font-bold text-gold">
@@ -252,7 +399,6 @@ export default function Home() {
 
       {/* ── Features ── */}
       <section id="features" className="relative py-32 px-6">
-        {/* Subtle top fade */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#0c0b09] to-transparent pointer-events-none" />
 
         <div className="max-w-6xl mx-auto">
@@ -281,53 +427,39 @@ export default function Home() {
             className="grid md:grid-cols-3 gap-5"
           >
             {features.map((feature) => (
-              <motion.div
+              <TiltCard
                 key={feature.title}
                 variants={fadeUp}
-                className="group relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-8 hover:border-gold/25 hover:bg-white/[0.04] transition-all duration-350 cursor-default"
+                className="group relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-8 hover:border-gold/25 hover:bg-white/[0.04] transition-all duration-300 cursor-default"
               >
-                {/* Hover glow */}
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                  style={{
-                    background:
-                      "radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(200,169,110,0.04), transparent 40%)",
-                  }}
-                />
-
-                <div className="relative">
-                  <div className="mb-5 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gold/10 text-gold group-hover:bg-gold/18 transition-colors duration-300">
-                    {feature.icon}
-                  </div>
-
-                  <span className="inline-block mb-4 px-2.5 py-1 rounded-full bg-gold/10 text-gold text-[10px] tracking-[0.12em] uppercase">
-                    {feature.badge}
-                  </span>
-
-                  <h3 className="font-display text-xl font-bold text-white mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-white/45 text-[13.5px] leading-relaxed">
-                    {feature.description}
-                  </p>
-
-                  <div className="mt-6 flex items-center gap-2 text-gold text-[13px] opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
-                    <span>Zistiť viac</span>
-                    <svg
-                      className="w-3.5 h-3.5"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                    >
-                      <path
-                        d="M2 7h10M8 3l4 4-4 4"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
+                <div className="mb-5 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gold/10 text-gold group-hover:bg-gold/20 transition-colors duration-300">
+                  {feature.icon}
                 </div>
-              </motion.div>
+
+                <span className="inline-block mb-4 px-2.5 py-1 rounded-full bg-gold/10 text-gold text-[10px] tracking-[0.12em] uppercase">
+                  {feature.badge}
+                </span>
+
+                <h3 className="font-display text-xl font-bold text-white mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-white/45 text-[13.5px] leading-relaxed">
+                  {feature.description}
+                </p>
+
+                <div className="mt-6 flex items-center gap-2 text-gold text-[13px] opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
+                  <span>Zistiť viac</span>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 14 14" fill="none">
+                    <path
+                      d="M2 7h10M8 3l4 4-4 4"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              </TiltCard>
             ))}
           </motion.div>
         </div>
