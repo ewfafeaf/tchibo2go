@@ -1,50 +1,50 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gold: #c8a96e;
-  --color-gold-light: #d4b97e;
-  --color-gold-dim: #a07840;
-  --color-bg: #0c0b09;
+  --color-brand-coffee: #1a1110;
+  --color-brand-gold:   #c5a059;
+
+  /* Derived palette */
+  --color-gold:       #c5a059;
+  --color-gold-light: #d4b06a;
+  --color-gold-dim:   #9e7a3c;
+  --color-card:       #1a1110;
+  --color-bg:         #0d0b0a;
 
   --font-display: var(--font-playfair);
-  --font-sans: var(--font-inter);
+  --font-sans:    var(--font-inter);
 }
 
 :root {
-  --background: #0c0b09;
+  --background: #0d0b0a;
   --foreground: #f5f0e8;
 }
 
+/* ── Base ── */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter), system-ui, sans-serif;
 }
+html { scroll-behavior: smooth; }
 
-html {
-  scroll-behavior: smooth;
+/* ── Custom cursor ── */
+html.custom-cursor,
+html.custom-cursor * { cursor: none !important; }
+@media (pointer: coarse) {
+  html.custom-cursor,
+  html.custom-cursor * { cursor: auto !important; }
 }
 
-/* ── Gradient text animation ── */
+/* ── Gradient headline ── */
 @keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
 }
-
 .gradient-animate {
   background: linear-gradient(
     90deg,
-    #a07840 0%,
-    #c8a96e 20%,
-    #f0d9a0 45%,
-    #fffbe8 55%,
-    #f0d9a0 70%,
-    #c8a96e 85%,
-    #a07840 100%
+    #9e7a3c 0%, #c5a059 20%, #eed898 45%, #fffbe8 55%, #eed898 70%, #c5a059 85%, #9e7a3c 100%
   );
   background-size: 300% auto;
   -webkit-background-clip: text;
@@ -52,3 +52,68 @@ html {
   background-clip: text;
   animation: gradient-shift 5s ease infinite;
 }
+
+/* ── Gold divider ── */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c5a059 40%, #c5a059 60%, transparent);
+  width: 80px;
+  margin: 0 auto;
+}
+
+/* ── Range slider ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 100%;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(197,160,89,0.18);
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(197,160,89,0.18);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #c5a059;
+  box-shadow: 0 0 0 3px rgba(197,160,89,0.25), 0 0 18px rgba(197,160,89,0.45);
+  margin-top: -9px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 5px rgba(197,160,89,0.3), 0 0 28px rgba(197,160,89,0.65);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #c5a059;
+  box-shadow: 0 0 18px rgba(197,160,89,0.45);
+  cursor: pointer;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d0b0a; }
+::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(197,160,89,0.55); }
+
+/* ── Selection ── */
+::selection { background: rgba(197,160,89,0.25); color: #fff; }
+
+/* ── GPU-compositor orbit animations ── */
+@keyframes orbit-cw  { to { transform: rotate(360deg)  translateZ(0); } }
+@keyframes orbit-ccw { to { transform: rotate(-360deg) translateZ(0); } }
+
+/* ── will-change helper ── */
+.gpu { will-change: transform; transform: translateZ(0); }
