@@ -13,7 +13,6 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 const CustomCursor  = dynamic(() => import("./components/CustomCursor"),  { ssr: false });
-const HeroParticles = dynamic(() => import("./components/HeroParticles"), { ssr: false });
 const AccordionGrid = dynamic(() => import("./components/AccordionGrid"), { ssr: false });
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -403,9 +402,9 @@ export default function Home() {
 
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const imgY    = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
-  const textY   = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const bgY     = useTransform(scrollYProgress, [0, 1], ["0%", "-14%"]);
+  const textY   = useTransform(scrollYProgress, [0, 1], ["0%", "10%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
   return (
     <div className="min-h-screen bg-bg text-white overflow-x-hidden">
@@ -511,109 +510,87 @@ export default function Home() {
 
       {/* ══ HERO ══ */}
       <section ref={heroRef} id="hero" className="relative min-h-screen flex flex-col overflow-hidden">
-        {/* Particles */}
-        <HeroParticles />
 
-        {/* Rings decoration — pure CSS on compositor thread */}
-        <div className="absolute inset-0 flex items-center justify-end pr-[8%] pointer-events-none overflow-hidden z-[1]">
-          {([500, 700, 900] as const).map((s, i) => (
-            <div key={s} className="absolute rounded-full border border-gold/[0.06]"
-              style={{
-                width: s, height: s,
-                animation: `${i % 2 === 0 ? "orbit-cw" : "orbit-ccw"} ${30 + i * 10}s linear infinite`,
-                willChange: "transform",
-              }} />
-          ))}
-        </div>
+        {/* Background photo — parallax layer */}
+        <motion.div
+          className="absolute inset-0 z-0"
+          style={{ y: bgY, scale: 1.1, willChange: "transform" }}
+        >
+          <Image
+            src="/kutik.png"
+            alt="Eurosam — prémiové kávovary Tchibo"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+        </motion.div>
+
+        {/* Left-side text scrim */}
+        <div className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(100deg, rgba(13,11,10,0.90) 0%, rgba(13,11,10,0.78) 32%, rgba(13,11,10,0.35) 58%, rgba(13,11,10,0.0) 100%)",
+          }}
+        />
+
+        {/* Bottom fade into next section */}
+        <div className="absolute bottom-0 inset-x-0 h-56 z-[1] pointer-events-none"
+          style={{ background: "linear-gradient(to top, #0d0b0a 0%, transparent 100%)" }}
+        />
 
         {/* Content */}
-        <motion.div style={{ y: textY, opacity, willChange: "transform, opacity" }}
-          className="relative z-[3] flex-1 flex items-center max-w-7xl mx-auto w-full px-8 xl:px-16 pt-28 pb-48">
-          <div className="grid lg:grid-cols-2 gap-12 items-center w-full">
+        <motion.div
+          style={{ y: textY, opacity, willChange: "transform, opacity" }}
+          className="relative z-[3] flex-1 flex items-center w-full px-8 lg:px-20 xl:px-28 pt-32 pb-44"
+        >
+          <div className="max-w-xl">
 
-            {/* Left */}
-            <div className="flex flex-col items-start">
-              <motion.span initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.2 }}
-                className="inline-block mb-6 px-4 py-1.5 rounded-full border border-gold/30 text-gold text-[11px] tracking-[0.2em] uppercase">
-                Premium Coffee Solutions
-              </motion.span>
+            {/* Eyebrow badge */}
+            <motion.span
+              initial={{ opacity: 0, x: -28 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.15, ease: E }}
+              className="inline-flex items-center gap-2 mb-7 px-4 py-1.5 rounded-full border border-gold/30 text-gold text-[11px] tracking-[0.2em] uppercase"
+              style={{ backdropFilter: "blur(10px)", background: "rgba(13,11,10,0.45)" }}
+            >
+              <span className="w-1 h-1 rounded-full bg-gold inline-block" />
+              Premium Coffee Solutions
+            </motion.span>
 
-              <h1 className="font-display text-[clamp(2.8rem,5.5vw,5rem)] font-bold leading-[1.08] tracking-tight mb-7">
-                {/* Word-by-word animation */}
-                {"Vášeň pre kávu,".split(" ").map((w, i) => (
-                  <motion.span key={i} className="inline-block mr-[0.28em]"
-                    initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.65, delay: 0.35 + i * 0.1, ease: E }}>
-                    {w}
-                  </motion.span>
-                ))}
-                <br />
-                <motion.span className="gradient-animate inline-block"
-                  initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.65, delay: 0.7, ease: E }}>
-                  profesionálne
-                </motion.span>
-                <br />
-                {"riešenia.".split(" ").map((w, i) => (
-                  <motion.span key={i} className="inline-block mr-[0.28em]"
-                    initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.65, delay: 0.85 + i * 0.1, ease: E }}>
-                    {w}
-                  </motion.span>
-                ))}
-              </h1>
+            {/* Headline — fade-right entrance */}
+            <motion.h1
+              initial={{ opacity: 0, x: -60 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3, ease: E }}
+              className="font-display text-[clamp(2.8rem,5.2vw,4.8rem)] font-bold leading-[1.06] tracking-tight mb-7"
+            >
+              Vášeň pre kávu,
+              <br />
+              <span className="gradient-animate">profesionálne</span>
+              <br />
+              riešenia.
+            </motion.h1>
 
-              <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 1 }}
-                className="text-white/50 text-[clamp(1rem,1.5vw,1.1rem)] max-w-md leading-[1.8] mb-10">
-                Dodávame prémiové kávovary Tchibo, SAM_ID kreditný systém, servis a spotrebný materiál pre podniky po celom Slovensku.
-              </motion.p>
+            {/* Sub */}
+            <motion.p
+              initial={{ opacity: 0, x: -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.6, ease: E }}
+              className="text-white/52 text-[clamp(0.95rem,1.4vw,1.08rem)] leading-[1.85] mb-10 max-w-sm"
+            >
+              Dodávame prémiové kávovary Tchibo, SAM_ID kreditný systém, servis a spotrebný materiál pre podniky po celom Slovensku.
+            </motion.p>
 
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 1.1 }}
-                className="flex flex-wrap gap-4">
-                <FillBtn href="#kavovary">Naše kávovary</FillBtn>
-                <FillBtn href="#kontakt" outline>Kontaktujte nás</FillBtn>
-              </motion.div>
-            </div>
-
-            {/* Right — coffee machine */}
-            <div className="hidden lg:flex items-center justify-center">
-              <motion.div
-                initial={{ opacity: 0, scale: 1.08 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 2, ease: "easeOut", delay: 0.4 }}
-                className="relative w-[420px] h-[520px]"
-              >
-                {/* Orbital rings — pure CSS on compositor thread */}
-                {([1.05, 1.22, 1.40] as const).map((s, i) => (
-                  <div key={i} className="absolute inset-0 rounded-full"
-                    style={{
-                      border: `1px ${i === 1 ? "dashed" : "solid"} rgba(200,169,110,0.07)`,
-                      transform: `scale(${s})`,
-                      animation: `${i % 2 === 0 ? "orbit-cw" : "orbit-ccw"} ${22 + i * 10}s linear infinite`,
-                      willChange: "transform",
-                    }} />
-                ))}
-                {/* Glow */}
-                <div className="absolute inset-0 rounded-full"
-                  style={{ background: "radial-gradient(circle, rgba(200,169,110,0.18) 0%, transparent 68%)", filter: "blur(30px)" }} />
-                {/* Float + 3D rotate */}
-                <motion.div className="absolute inset-0"
-                  animate={{ y: [0, -14, 0] }} transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}>
-                  <motion.div className="absolute inset-0"
-                    animate={{ rotateY: [0, 6, 0, -6, 0] }}
-                    transition={{ duration: 13, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    style={{ transformPerspective: 1200 }}>
-                    <Image src="http://files.exoweb.eu/17/14/171404be-2f46-4496-8b34-81eb8223662f.png"
-                      alt="Tchibo kávovar" fill className="object-contain" priority unoptimized />
-                  </motion.div>
-                </motion.div>
-                {/* Pulsing glow ring */}
-                <motion.div className="absolute -inset-6 rounded-full pointer-events-none"
-                  style={{ background: "radial-gradient(circle, rgba(200,169,110,0.12) 0%, transparent 65%)", filter: "blur(20px)" }}
-                  animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.05, 1] }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }} />
-              </motion.div>
-            </div>
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, x: -28 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.82, ease: E }}
+              className="flex flex-wrap gap-4"
+            >
+              <FillBtn href="#kavovary">Naše kávovary</FillBtn>
+              <FillBtn href="#kontakt" outline>Kontaktujte nás</FillBtn>
+            </motion.div>
           </div>
         </motion.div>
 
