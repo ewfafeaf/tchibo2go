@@ -562,7 +562,7 @@ export default function Home() {
               initial={{ opacity: 0, x: -60 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: E }}
-              className="font-display text-[clamp(2.8rem,5.2vw,4.8rem)] font-bold leading-[1.06] tracking-tight mb-7"
+              className="font-display text-[clamp(3rem,5.8vw,5.6rem)] font-black leading-[0.98] tracking-tight mb-7"
             >
               Vášeň pre kávu,
               <br />
