@@ -14,6 +14,7 @@ import "aos/dist/aos.css";
 
 const CustomCursor  = dynamic(() => import("./components/CustomCursor"),  { ssr: false });
 const HeroParticles = dynamic(() => import("./components/HeroParticles"), { ssr: false });
+const AccordionGrid = dynamic(() => import("./components/AccordionGrid"), { ssr: false });
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const E: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -632,7 +633,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* ══ KÁVOVARY GRID ══ */}
+      {/* ══ KÁVOVARY ACCORDION ══ */}
       <section id="kavovary" className="relative py-36 px-4 overflow-hidden">
         <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-bg to-transparent pointer-events-none" />
 
@@ -642,27 +643,7 @@ export default function Home() {
             title={<>Kávovary Tchibo<br /><span className="text-white/30">pre každú prevádzku</span></>}
             sub="Vyberáme len overené modely s dlhodobou technickou podporou a zárukou servisu na celom Slovensku."
           />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {COFFEE_MODELS.map((m, i) => (
-              <div key={m.name} className="gpu" data-aos="zoom-in" data-aos-delay={String(i * 100)}>
-                <TiltCard className="h-full rounded-2xl border border-white/[0.07] bg-card hover:border-gold/35 overflow-hidden transition-colors duration-300 cursor-default">
-                  <div className="relative h-56 overflow-hidden group">
-                    <Image src={m.img} alt={m.name} fill className="object-contain p-4 transition-transform duration-500 group-hover:scale-110" unoptimized />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-                    <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-bg/60 border border-gold/30 text-gold text-[10px] tracking-[0.1em] uppercase backdrop-blur-sm">
-                      {m.tag}
-                    </span>
-                  </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-display text-lg font-bold text-white mb-2">{m.name}</h3>
-                    <p className="text-white/40 text-[13px] leading-relaxed mb-4 flex-1">{m.desc}</p>
-                    <FillBtn href="#kontakt">Dopytovať</FillBtn>
-                  </div>
-                </TiltCard>
-              </div>
-            ))}
-          </div>
+          <AccordionGrid />
         </div>
       </section>
 
